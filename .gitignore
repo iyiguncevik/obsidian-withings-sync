@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+.dev.vars
+
+# Plugin build output
+plugin/main.js
+plugin/main.js.map
+
+# Cloudflare Worker local state
+worker/.wrangler/
+
+# Throwaway test vault
+.test-vault/

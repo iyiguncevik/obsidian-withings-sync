@@ -1,0 +1,19 @@
+{
+  "name": "withings-sync",
+  "version": "0.0.1",
+  "description": "Sync Withings scale measurements into Daily Notes frontmatter.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [],
+  "author": "iyiguncevik",
+  "license": "MIT",
+  "devDependencies": {
+    "builtin-modules": "^5.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "latest"
+  }
+}

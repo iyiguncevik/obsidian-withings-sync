@@ -1,0 +1,9 @@
+{
+  "id": "withings-sync",
+  "name": "Withings Sync",
+  "version": "0.0.1",
+  "minAppVersion": "1.0.0",
+  "description": "Sync Withings scale measurements into Daily Notes frontmatter.",
+  "author": "iyiguncevik",
+  "isDesktopOnly": true
+}

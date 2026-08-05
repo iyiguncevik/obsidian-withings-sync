@@ -1,0 +1,17 @@
+{
+  "name": "withings-sync-auth",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Cloudflare Worker OAuth bridge for Withings Sync",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [],
+  "author": "iyiguncevik",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
