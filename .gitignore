@@ -9,6 +9,7 @@ plugin/main.js.map
 
 # Cloudflare Worker local state
 worker/.wrangler/
+worker/.dev.vars
 
 # Throwaway test vault
 .test-vault/

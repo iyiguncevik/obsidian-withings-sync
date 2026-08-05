@@ -2,6 +2,11 @@ name = "withings-sync-auth"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
+# Secrets / config (set via `wrangler secret put`, not in git):
+#   WITHINGS_CLIENT_ID
+#   WITHINGS_CLIENT_SECRET
+#   WITHINGS_REDIRECT_URI  → https://withings-sync-auth.<account>.workers.dev/callback
+
 [observability]
 enabled = true
 
