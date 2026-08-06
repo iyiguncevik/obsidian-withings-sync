@@ -4,12 +4,17 @@ const {
   validateMeasurementSettings,
 } = require("./measures");
 const { readStoredData } = require("./auth-data");
+const {
+  DEFAULT_NUMBER_LOCALE,
+  isSupportedNumberLocale,
+} = require("./locale-format");
 
 /** @typedef {import('./main.js').WithingsSyncPlugin} WithingsSyncPlugin */
 
 const SETTINGS_FIELDS = [
   "measurements",
   "unit",
+  "numberLocale",
   "syncOnStartup",
   "syncIntervalMinutes",
   "lookbackDays",
@@ -20,6 +25,7 @@ const SETTINGS_FIELDS = [
 const DEFAULT_SETTINGS = {
   measurements: getDefaultMeasurementSettings(),
   unit: "kg",
+  numberLocale: DEFAULT_NUMBER_LOCALE,
   syncOnStartup: true,
   syncIntervalMinutes: 60,
   lookbackDays: 7,
@@ -92,6 +98,10 @@ function validateSyncSettings(settings) {
 
   if (settings.unit !== "kg" && settings.unit !== "lb") {
     return "Unit must be kg or lb.";
+  }
+
+  if (!isSupportedNumberLocale(settings.numberLocale)) {
+    return "Choose a supported number locale.";
   }
 
   const lookback = Number(settings.lookbackDays);

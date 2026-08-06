@@ -8,6 +8,7 @@ const {
   DEFAULT_SETTINGS,
 } = require("./plugin-settings");
 const { runSync } = require("./sync-run");
+const { openBackfillModal } = require("./backfill-modal");
 
 class WithingsSyncPlugin extends Plugin {
   async onload() {
@@ -39,15 +40,15 @@ class WithingsSyncPlugin extends Plugin {
       id: "sync-now",
       name: "Sync now",
       callback: () => {
-        void runSync(this, "lookback");
+        void runSync(this, "manual");
       },
     });
 
     this.addCommand({
-      id: "sync-today",
-      name: "Sync today",
+      id: "backfill",
+      name: "Backfill date range…",
       callback: () => {
-        void runSync(this, "today");
+        openBackfillModal(this);
       },
     });
 
@@ -56,7 +57,7 @@ class WithingsSyncPlugin extends Plugin {
     if (this.settings.syncOnStartup) {
       const auth = await loadAuthData(this);
       if (isConnected(auth)) {
-        void runSync(this, "lookback");
+        void runSync(this, "automatic");
       }
     }
   }
@@ -80,7 +81,6 @@ class WithingsSyncPlugin extends Plugin {
 
     await saveSettings(this, this.settings);
     this.restartSyncInterval();
-    this.refreshSettingsDisplay();
     return true;
   }
 
@@ -92,7 +92,7 @@ class WithingsSyncPlugin extends Plugin {
     }
 
     this.syncIntervalId = window.setInterval(() => {
-      void runSync(this, "lookback");
+      void runSync(this, "automatic");
     }, minutes * 60 * 1000);
   }
 
@@ -105,6 +105,10 @@ class WithingsSyncPlugin extends Plugin {
 
   refreshSettingsDisplay() {
     this.settingsTab?.display();
+  }
+
+  refreshConnectionUI() {
+    void this.settingsTab?.updateConnectionHeader();
   }
 }
 

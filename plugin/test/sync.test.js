@@ -53,3 +53,12 @@ test("buildFrontmatterPatch omits disabled and missing measures", () => {
   assert.deepEqual(patch, { weight: 70.5 });
   assert.equal(Object.hasOwn(patch, "heart_rate"), false);
 });
+
+test("buildFrontmatterPatch formats values for selected locale", () => {
+  const settings = getDefaultMeasurementSettings();
+  const dayTwo = fixture.body.measuregrps[2];
+
+  assert.deepEqual(buildFrontmatterPatch(dayTwo, settings, "kg", "tr-TR"), {
+    weight: "70,50",
+  });
+});

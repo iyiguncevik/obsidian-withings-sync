@@ -105,7 +105,7 @@ async function disconnect(plugin) {
       lastError: "",
     });
     plugin.stopSyncInterval?.();
-    plugin.refreshSettingsDisplay();
+    plugin.refreshConnectionUI();
     new Notice("Withings Sync: disconnected.");
   } catch (err) {
     const message =
@@ -134,7 +134,7 @@ async function handleAuthCallback(plugin, params) {
     data.pendingStateExpiresAt = 0;
     data.lastError = error;
     await saveAuthData(plugin, data);
-    plugin.refreshSettingsDisplay();
+    plugin.refreshConnectionUI();
     new Notice(`Withings Sync: authorization failed (${error}).`);
     return;
   }
@@ -157,7 +157,7 @@ async function handleAuthCallback(plugin, params) {
     data.pendingStateExpiresAt = 0;
     data.lastError = "state_mismatch";
     await saveAuthData(plugin, data);
-    plugin.refreshSettingsDisplay();
+    plugin.refreshConnectionUI();
     new Notice("Withings Sync: authorization failed (invalid state).");
     return;
   }
@@ -167,7 +167,7 @@ async function handleAuthCallback(plugin, params) {
     data.pendingStateExpiresAt = 0;
     data.lastError = "missing_tokens";
     await saveAuthData(plugin, data);
-    plugin.refreshSettingsDisplay();
+    plugin.refreshConnectionUI();
     new Notice("Withings Sync: authorization failed (missing tokens).");
     return;
   }

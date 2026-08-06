@@ -1,5 +1,5 @@
 const { decodeMeasuresFromGroup } = require("./measures");
-const { formatMeasureValue } = require("./units");
+const { formatMeasureForFrontmatter, DEFAULT_NUMBER_LOCALE } = require("./locale-format");
 
 /**
  * Calendar day for measure groups uses the local timezone of the runtime
@@ -38,10 +38,16 @@ function groupMeasureGrpsLatestPerDay(measuregrps) {
  * @param {{ measures?: Array<{ value: number; type: number; unit: number }> }} group
  * @param {Array<{ type: number; enabled: boolean; property: string }>} measurementSettings
  * @param {"kg"|"lb"} [unit]
+ * @param {string} [numberLocale]
  */
-function buildFrontmatterPatch(group, measurementSettings, unit = "kg") {
+function buildFrontmatterPatch(
+  group,
+  measurementSettings,
+  unit = "kg",
+  numberLocale = DEFAULT_NUMBER_LOCALE,
+) {
   const decoded = decodeMeasuresFromGroup(group);
-  /** @type {Record<string, number>} */
+  /** @type {Record<string, number | string>} */
   const patch = {};
 
   for (const setting of measurementSettings) {
@@ -51,10 +57,11 @@ function buildFrontmatterPatch(group, measurementSettings, unit = "kg") {
     if (!decoded.has(setting.type)) {
       continue;
     }
-    patch[setting.property] = formatMeasureValue(
+    patch[setting.property] = formatMeasureForFrontmatter(
       setting.type,
       decoded.get(setting.type),
       unit,
+      numberLocale,
     );
   }
 

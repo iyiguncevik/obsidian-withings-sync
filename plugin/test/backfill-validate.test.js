@@ -6,6 +6,10 @@ const {
   chunkBackfillRange,
   inclusiveDaySpan,
   parseCalendarDate,
+  formatBackfillValidationError,
+  isCalendarDayInRange,
+  calendarDayStartUnix,
+  calendarDayEndUnix,
 } = require("../src/backfill");
 
 test("validateBackfillRange accepts ordered in-range dates", () => {
@@ -48,4 +52,23 @@ test("chunkBackfillRange splits into contiguous 90-day windows", () => {
 test("chunkBackfillRange returns single chunk for short ranges", () => {
   const chunks = chunkBackfillRange("2024-01-01", "2024-01-15");
   assert.deepEqual(chunks, [{ from: "2024-01-01", to: "2024-01-15" }]);
+});
+
+test("formatBackfillValidationError maps known codes", () => {
+  assert.match(
+    formatBackfillValidationError("from_after_to"),
+    /on or before/i,
+  );
+});
+
+test("isCalendarDayInRange compares YYYY-MM-DD lexicographically", () => {
+  assert.equal(isCalendarDayInRange("2024-01-15", "2024-01-01", "2024-01-31"), true);
+  assert.equal(isCalendarDayInRange("2023-12-31", "2024-01-01", "2024-01-31"), false);
+});
+
+test("calendar day unix helpers cover local day boundaries", () => {
+  const start = calendarDayStartUnix("2024-06-15");
+  const end = calendarDayEndUnix("2024-06-15");
+  assert.ok(end > start);
+  assert.equal(end - start, 86399);
 });

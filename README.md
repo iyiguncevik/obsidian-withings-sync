@@ -2,7 +2,7 @@
 
 Desktop Obsidian plugin that connects to your Withings account and syncs scale measurements into **core Daily Notes** frontmatter.
 
-**Status:** Step 5 — Daily Notes sync, settings, and interval; backfill is Step 6.
+**Status:** Step 6 — backfill modal and chunked range sync; docs/release is Step 7.
 
 ## Repository layout
 
@@ -29,7 +29,11 @@ make test-vault    # or OBSIDIAN_VAULT=/path/to/vault make install-vault
 
 In Obsidian: enable **Community plugins**, turn off Restricted mode, enable **Withings Sync**, then run **Connect Withings account** from the command palette or plugin settings.
 
-**Requirements:** Core **Daily Notes** must be enabled. Use **Sync now** / **Sync today** after connecting; configure measurements, units, lookback, and sync interval in plugin settings.
+**Requirements:** Core **Daily Notes** must be enabled. Use **Sync now** after connecting; configure measurements, units, lookback, and sync interval in plugin settings.
+
+**Sync behavior:** On startup and on interval, the plugin fetches measurements **since the last sync** (incremental). Before the first sync it checks the lookback window (default 7 days) and notifies if nothing is found. **Sync now** always re-fetches the lookback window and overwrites frontmatter for those days.
+
+**Backfill:** Run **Backfill date range…** from the command palette or the **Backfill…** button in settings. Enter `YYYY-MM-DD` from/to dates (max 365 days inclusive). The plugin fetches data in 90-day chunks and writes Daily Notes frontmatter using the same rules as regular sync. Backfill updates **last synced** but does **not** advance the incremental `lastupdate` cursor used by Sync now.
 
 CI runs `npm test` and `npm run build` in `plugin/` on every push/PR to `master`.
 

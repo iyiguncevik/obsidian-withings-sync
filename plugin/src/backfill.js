@@ -118,6 +118,57 @@ function chunkBackfillRange(fromStr, toStr, maxChunkDays = MAX_CHUNK_DAYS) {
   return chunks;
 }
 
+/**
+ * @param {string} error
+ */
+function formatBackfillValidationError(error) {
+  switch (error) {
+    case "invalid_date":
+      return "Enter valid calendar dates as YYYY-MM-DD.";
+    case "from_after_to":
+      return "From date must be on or before To date.";
+    case "to_in_future":
+      return "To date cannot be in the future.";
+    case "range_too_long":
+      return `Range cannot exceed ${MAX_BACKFILL_DAYS} days inclusive.`;
+    default:
+      return "Invalid date range.";
+  }
+}
+
+/**
+ * @param {string} dayKey YYYY-MM-DD
+ */
+function isCalendarDayInRange(dayKey, fromStr, toStr) {
+  return dayKey >= fromStr && dayKey <= toStr;
+}
+
+/**
+ * Local midnight for a calendar day.
+ * @param {string} dayKey YYYY-MM-DD
+ */
+function calendarDayStartUnix(dayKey) {
+  const date = parseCalendarDate(dayKey);
+  if (!date) {
+    throw new Error(`Invalid date: ${dayKey}`);
+  }
+  return Math.floor(date.getTime() / 1000);
+}
+
+/**
+ * Local end-of-day for a calendar day.
+ * @param {string} dayKey YYYY-MM-DD
+ */
+function calendarDayEndUnix(dayKey) {
+  const date = parseCalendarDate(dayKey);
+  if (!date) {
+    throw new Error(`Invalid date: ${dayKey}`);
+  }
+  const end = new Date(date.getTime());
+  end.setHours(23, 59, 59, 0);
+  return Math.floor(end.getTime() / 1000);
+}
+
 module.exports = {
   MAX_BACKFILL_DAYS,
   MAX_CHUNK_DAYS,
@@ -127,4 +178,8 @@ module.exports = {
   inclusiveDaySpan,
   validateBackfillRange,
   chunkBackfillRange,
+  formatBackfillValidationError,
+  isCalendarDayInRange,
+  calendarDayStartUnix,
+  calendarDayEndUnix,
 };

@@ -7,14 +7,14 @@ const { fetchAllMeasureGroups } = require("./withings-api");
 const {
   groupMeasureGrpsLatestPerDay,
   buildFrontmatterPatch,
-  calendarDayKey,
 } = require("./sync");
 const {
   resolveDailyNote,
   writeFrontmatterPatch,
-  startOfTodayUnix,
-  nowUnix,
 } = require("./daily-notes");
+const { nowUnix } = require("./time");
+const { logInfo, logWarn, logError, formatUnixTimestamp } = require("./log");
+const { buildSyncFetchQuery } = require("./sync-fetch");
 
 /** @typedef {import('./main.js').WithingsSyncPlugin} WithingsSyncPlugin */
 
@@ -22,28 +22,85 @@ const {
 let syncInProgress = false;
 
 /**
+ * @returns {boolean}
+ */
+function tryBeginOperation() {
+  if (syncInProgress) {
+    return false;
+  }
+  syncInProgress = true;
+  return true;
+}
+
+function endOperation() {
+  syncInProgress = false;
+}
+
+/**
  * @param {string} message
  * @param {unknown} [err]
  */
 function reportSyncError(message, err) {
-  if (err !== undefined) {
-    console.error(`Withings Sync: ${message}`, err);
-  } else {
-    console.error(`Withings Sync: ${message}`);
-  }
+  logError(message, err);
   new Notice(`Withings Sync: ${message}`);
 }
 
 /**
  * @param {WithingsSyncPlugin} plugin
- * @param {"lookback"|"today"} mode
+ * @param {Map<string, object>} byDay
+ * @param {object} settings
+ * @param {"manual"|"automatic"|"backfill"} context
+ */
+async function writeMeasureGroupsToDailyNotes(plugin, byDay, settings, context) {
+  let daysUpdated = 0;
+  let daysSkippedEmptyPatch = 0;
+
+  for (const [dayKey, group] of byDay.entries()) {
+    const patch = buildFrontmatterPatch(
+      group,
+      settings.measurements,
+      settings.unit,
+      settings.numberLocale,
+    );
+
+    if (Object.keys(patch).length === 0) {
+      daysSkippedEmptyPatch += 1;
+      logInfo("Skipped day — no enabled measurements in latest group", {
+        context,
+        day: dayKey,
+        groupId: group.grpid,
+      });
+      continue;
+    }
+
+    const file = await resolveDailyNote(plugin.app, dayKey);
+    await writeFrontmatterPatch(plugin.app, file, patch);
+    daysUpdated += 1;
+
+    logInfo("Updated daily note frontmatter", {
+      context,
+      day: dayKey,
+      file: file.path,
+      properties: patch,
+    });
+  }
+
+  return {
+    daysUpdated,
+    daysSkippedEmptyPatch,
+  };
+}
+
+/**
+ * @param {WithingsSyncPlugin} plugin
+ * @param {"manual"|"automatic"} mode
  */
 async function runSync(plugin, mode) {
-  if (syncInProgress) {
+  if (!tryBeginOperation()) {
+    logInfo("Sync skipped — another sync or backfill is already running");
     return;
   }
 
-  syncInProgress = true;
   try {
     const auth = await loadAuthData(plugin);
     if (!isConnected(auth)) {
@@ -65,46 +122,67 @@ async function runSync(plugin, mode) {
     }
 
     const meastypes = enabled.map((entry) => entry.type).join(",");
-    const enddate = nowUnix();
-    let startdate;
+    const fetchQuery = buildSyncFetchQuery(settings, mode);
 
-    if (mode === "today") {
-      startdate = startOfTodayUnix();
-    } else {
-      const lookbackStart = enddate - settings.lookbackDays * 86400;
-      startdate =
-        settings.lastupdate > 0
-          ? Math.max(lookbackStart, settings.lastupdate)
-          : lookbackStart;
-    }
+    logInfo("Sync started", {
+      mode,
+      fetchStrategy: fetchQuery.strategy,
+      meastypes,
+      lookbackDays: settings.lookbackDays,
+      startdate:
+        fetchQuery.startdate != null
+          ? formatUnixTimestamp(fetchQuery.startdate)
+          : null,
+      enddate:
+        fetchQuery.enddate != null ? formatUnixTimestamp(fetchQuery.enddate) : null,
+      lastupdate:
+        fetchQuery.lastupdate != null
+          ? formatUnixTimestamp(fetchQuery.lastupdate)
+          : null,
+      numberLocale: settings.numberLocale,
+      unit: settings.unit,
+    });
 
     const { measuregrps, updatetime } = await fetchAllMeasureGroups(plugin, {
       meastypes,
-      startdate,
-      enddate,
+      startdate: fetchQuery.startdate,
+      enddate: fetchQuery.enddate,
+      lastupdate: fetchQuery.lastupdate,
     });
 
     const byDay = groupMeasureGrpsLatestPerDay(measuregrps);
-    const todayKey = calendarDayKey(enddate);
 
-    for (const [dayKey, group] of byDay.entries()) {
-      if (mode === "today" && dayKey !== todayKey) {
-        continue;
+    logInfo("Fetched measure groups from Withings", {
+      mode,
+      fetchStrategy: fetchQuery.strategy,
+      measureGroupCount: measuregrps.length,
+      calendarDayCount: byDay.size,
+      withingsUpdatetime:
+        updatetime > 0 ? formatUnixTimestamp(updatetime) : null,
+    });
+
+    if (measuregrps.length === 0) {
+      logWarn("No measure groups returned for this sync", {
+        mode,
+        fetchStrategy: fetchQuery.strategy,
+      });
+
+      if (
+        mode === "automatic" &&
+        fetchQuery.strategy === "initial-lookback"
+      ) {
+        new Notice(
+          `Withings Sync: No measurements found in the last ${settings.lookbackDays} day(s). Use Backfill for older data.`,
+        );
       }
-
-      const patch = buildFrontmatterPatch(
-        group,
-        settings.measurements,
-        settings.unit,
-      );
-
-      if (Object.keys(patch).length === 0) {
-        continue;
-      }
-
-      const file = await resolveDailyNote(plugin.app, dayKey);
-      await writeFrontmatterPatch(plugin.app, file, patch);
     }
+
+    const writeStats = await writeMeasureGroupsToDailyNotes(
+      plugin,
+      byDay,
+      settings,
+      mode,
+    );
 
     settings.lastSyncedAt = Date.now();
     if (updatetime > 0) {
@@ -112,15 +190,30 @@ async function runSync(plugin, mode) {
     }
     await saveSettings(plugin, settings);
     plugin.settings = settings;
-    plugin.refreshSettingsDisplay();
+    plugin.refreshConnectionUI();
+
+    logInfo("Sync finished", {
+      mode,
+      fetchStrategy: fetchQuery.strategy,
+      daysUpdated: writeStats.daysUpdated,
+      daysSkippedEmptyPatch: writeStats.daysSkippedEmptyPatch,
+      lastupdate:
+        settings.lastupdate > 0
+          ? formatUnixTimestamp(settings.lastupdate)
+          : null,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync failed.";
     reportSyncError(message, err);
   } finally {
-    syncInProgress = false;
+    endOperation();
   }
 }
 
 module.exports = {
   runSync,
+  tryBeginOperation,
+  endOperation,
+  reportSyncError,
+  writeMeasureGroupsToDailyNotes,
 };

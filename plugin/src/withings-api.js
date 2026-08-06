@@ -25,14 +25,15 @@ async function requestGetmeasPage(accessToken, params) {
     offset: String(params.offset ?? 0),
   });
 
-  if (params.startdate != null) {
-    body.set("startdate", String(params.startdate));
-  }
-  if (params.enddate != null) {
-    body.set("enddate", String(params.enddate));
-  }
   if (params.lastupdate != null) {
     body.set("lastupdate", String(params.lastupdate));
+  } else {
+    if (params.startdate != null) {
+      body.set("startdate", String(params.startdate));
+    }
+    if (params.enddate != null) {
+      body.set("enddate", String(params.enddate));
+    }
   }
 
   return requestUrl({

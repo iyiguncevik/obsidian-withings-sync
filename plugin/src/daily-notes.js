@@ -46,7 +46,7 @@ async function resolveDailyNote(app, dayKey) {
 /**
  * @param {import('obsidian').App} app
  * @param {import('obsidian').TFile} file
- * @param {Record<string, number>} patch
+ * @param {Record<string, number | string>} patch
  */
 async function writeFrontmatterPatch(app, file, patch) {
   if (Object.keys(patch).length === 0) {
@@ -60,21 +60,9 @@ async function writeFrontmatterPatch(app, file, patch) {
   });
 }
 
-function startOfTodayUnix() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return Math.floor(start.getTime() / 1000);
-}
-
-function nowUnix() {
-  return Math.floor(Date.now() / 1000);
-}
-
 module.exports = {
   getDailyNotesInstance,
   assertDailyNotesEnabled,
   resolveDailyNote,
   writeFrontmatterPatch,
-  startOfTodayUnix,
-  nowUnix,
 };

@@ -14,7 +14,7 @@ endif
 	mkdir -p "$(OBSIDIAN_VAULT)/.obsidian/plugins/withings-sync"
 	cp plugin/main.js plugin/manifest.json plugin/styles.css "$(OBSIDIAN_VAULT)/.obsidian/plugins/withings-sync/"
 
-test-vault:
+test-vault: build
 	$(MAKE) build
 	mkdir -p .test-vault/.obsidian/plugins/withings-sync
 	mkdir -p .test-vault/Daily\ Notes
