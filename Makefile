@@ -17,10 +17,12 @@ endif
 test-vault:
 	$(MAKE) build
 	mkdir -p .test-vault/.obsidian/plugins/withings-sync
+	mkdir -p .test-vault/Daily\ Notes
 	cp plugin/main.js plugin/manifest.json plugin/styles.css .test-vault/.obsidian/plugins/withings-sync/
 	printf '%s\n' '{' '  "communityPluginEnabled": true' '}' > .test-vault/.obsidian/app.json
-	printf '%s\n' '[' '  "file-explorer",' '  "global-search",' '  "switcher",' '  "graph",' '  "backlink",' '  "canvas",' '  "outgoing-link",' '  "tag-pane",' '  "page-preview",' '  "daily-notes",' '  "templates",' '  "note-composer",' '  "command-palette",' '  "editor-status",' '  "bookmarks",' '  "markdown-importer",' '  "zk-prefixer",' '  "random-note",' '  "outline",' '  "word-count",' '  "slides",' '  "audio-recorder",' '  "workspaces",' '  "file-recovery",' '  "publish",' '  "sync",' '  "webviewer"' ']' > .test-vault/.obsidian/core-plugins.json
+	printf '%s\n' '{' '  "file-explorer": true,' '  "global-search": true,' '  "switcher": true,' '  "graph": true,' '  "backlink": true,' '  "outgoing-link": true,' '  "tag-pane": true,' '  "page-preview": true,' '  "daily-notes": true,' '  "templates": true,' '  "note-composer": true,' '  "command-palette": true,' '  "editor-status": true,' '  "bookmarks": true,' '  "outline": true,' '  "word-count": true,' '  "properties": true' '}' > .test-vault/.obsidian/core-plugins.json
 	printf '%s\n' '{' '  "format": "YYYY-MM-DD",' '  "folder": "Daily Notes",' '  "template": ""' '}' > .test-vault/.obsidian/daily-notes.json
-	printf '%s\n' '[]' > .test-vault/.obsidian/community-plugins.json
-	@echo "Test vault created at ./.test-vault/"
-	@echo "Open it in Obsidian: File → Open folder as vault → select .test-vault/"
+	printf '%s\n' '[' '  "withings-sync"' ']' > .test-vault/.obsidian/community-plugins.json
+	@echo "Test vault ready at ./.test-vault/"
+	@echo "Open in Obsidian: File → Open folder as vault → .test-vault/"
+	@echo "Daily Notes and Withings Sync are pre-enabled; turn off Restricted mode if prompted."

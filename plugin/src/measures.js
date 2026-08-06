@@ -65,6 +65,30 @@ function getEnabledMeasurementSettings(settings) {
 }
 
 /**
+ * @param {Array<{ type: number; enabled: boolean; property: string }>} measurements
+ */
+function validateMeasurementSettings(measurements) {
+  /** @type {Set<string>} */
+  const seen = new Set();
+
+  for (const entry of measurements) {
+    const property = String(entry.property ?? "").trim();
+    if (!entry.enabled) {
+      continue;
+    }
+    if (!property) {
+      return "Enabled measurements need a property name.";
+    }
+    if (seen.has(property)) {
+      return `Duplicate property name: ${property}`;
+    }
+    seen.add(property);
+  }
+
+  return null;
+}
+
+/**
  * @param {number} type
  */
 function isMassMeasureType(type) {
@@ -78,5 +102,6 @@ module.exports = {
   decodeMeasuresFromGroup,
   getDefaultMeasurementSettings,
   getEnabledMeasurementSettings,
+  validateMeasurementSettings,
   isMassMeasureType,
 };

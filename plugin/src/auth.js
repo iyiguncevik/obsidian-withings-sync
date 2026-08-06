@@ -9,7 +9,7 @@ const {
   STATE_TTL_MS,
   TOKEN_REFRESH_SKEW_MS,
 } = require("./constants");
-const { loadAuthData, saveAuthData, isConnected } = require("./auth-data");
+const { isConnected, loadAuthData, saveAuthData } = require("./auth-data");
 
 /** @typedef {import('./main.js').WithingsSyncPlugin} WithingsSyncPlugin */
 
@@ -104,6 +104,7 @@ async function disconnect(plugin) {
       pendingStateExpiresAt: 0,
       lastError: "",
     });
+    plugin.stopSyncInterval?.();
     plugin.refreshSettingsDisplay();
     new Notice("Withings Sync: disconnected.");
   } catch (err) {
@@ -179,6 +180,7 @@ async function handleAuthCallback(plugin, params) {
   data.pendingStateExpiresAt = 0;
   data.lastError = "";
   await saveAuthData(plugin, data);
+  plugin.restartSyncInterval?.();
   plugin.refreshSettingsDisplay();
   new Notice("Withings Sync: connected.");
 }

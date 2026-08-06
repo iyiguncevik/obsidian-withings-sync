@@ -2,7 +2,7 @@
 
 Desktop Obsidian plugin that connects to your Withings account and syncs scale measurements into **core Daily Notes** frontmatter.
 
-**Status:** Step 4 — pure measurement helpers and fixture tests; sync to Daily Notes is Step 5.
+**Status:** Step 5 — Daily Notes sync, settings, and interval; backfill is Step 6.
 
 ## Repository layout
 
@@ -28,6 +28,8 @@ make test-vault    # or OBSIDIAN_VAULT=/path/to/vault make install-vault
 ```
 
 In Obsidian: enable **Community plugins**, turn off Restricted mode, enable **Withings Sync**, then run **Connect Withings account** from the command palette or plugin settings.
+
+**Requirements:** Core **Daily Notes** must be enabled. Use **Sync now** / **Sync today** after connecting; configure measurements, units, lookback, and sync interval in plugin settings.
 
 CI runs `npm test` and `npm run build` in `plugin/` on every push/PR to `master`.
 
@@ -90,7 +92,7 @@ From the repo root:
 ```bash
 make build         # build the plugin
 make test          # run plugin tests
-make test-vault    # create ./.test-vault/ with Daily Notes enabled
+make test-vault    # create ./.test-vault/ (Daily Notes + Withings Sync pre-enabled)
 OBSIDIAN_VAULT=/path/to/vault make install-vault   # copy build into a vault
 ```
 
