@@ -2,7 +2,7 @@
 
 Desktop Obsidian plugin that connects to your Withings account and syncs scale measurements into **core Daily Notes** frontmatter.
 
-**Status:** Step 2 — Worker OAuth bridge implemented; plugin Connect flow is Step 3.
+**Status:** Step 3 — plugin Connect/Disconnect implemented; measurement sync is Step 5.
 
 ## Repository layout
 
@@ -20,6 +20,15 @@ npm run build      # production build → main.js
 npm test           # placeholder tests (real tests in Step 4)
 ```
 
+### Sideload for development
+
+```bash
+make build
+make test-vault    # or OBSIDIAN_VAULT=/path/to/vault make install-vault
+```
+
+In Obsidian: enable **Community plugins**, turn off Restricted mode, enable **Withings Sync**, then run **Connect Withings account** from the command palette or plugin settings.
+
 CI runs `npm test` and `npm run build` in `plugin/` on every push/PR to `master`.
 
 ## Worker
@@ -32,6 +41,7 @@ OAuth bridge routes:
 | `/callback` | GET | Withings OAuth redirect; exchanges code; redirects to `obsidian://withings-sync/auth?...` |
 | `/callback` | HEAD | Withings redirect URI verification probe (returns 200) |
 | `/refresh` | POST | JSON `{ "refresh_token": "..." }` → `{ access_token, refresh_token, expires_in }` |
+| `/client-id` | GET | Public Withings Client ID (used by plugin if not hardcoded) |
 
 ### Required configuration
 

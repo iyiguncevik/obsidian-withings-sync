@@ -204,6 +204,14 @@ export default {
       });
     }
 
+    if (pathname === "/client-id" && request.method === "GET") {
+      if (!env.WITHINGS_CLIENT_ID) {
+        logEvent({ event: "client_id_config_error" });
+        return jsonResponse({ error: "server_config" }, 500);
+      }
+      return jsonResponse({ client_id: env.WITHINGS_CLIENT_ID });
+    }
+
     if (pathname === "/callback" && request.method === "HEAD") {
       logEvent({ event: "oauth_callback_head_probe" });
       return new Response(null, { status: 200 });
