@@ -1,0 +1,48 @@
+{
+  "status": 0,
+  "body": {
+    "updatetime": 1705480800,
+    "timezone": "Europe/Vienna",
+    "measuregrps": [
+      {
+        "grpid": 1001,
+        "attrib": 0,
+        "date": 1705312800,
+        "created": 1705312800,
+        "category": 1,
+        "deviceid": "test-scale",
+        "measures": [
+          { "value": 7000, "type": 1, "unit": -2 },
+          { "value": 1850, "type": 6, "unit": -2 }
+        ]
+      },
+      {
+        "grpid": 1002,
+        "attrib": 0,
+        "date": 1705356000,
+        "created": 1705356000,
+        "category": 1,
+        "deviceid": "test-scale",
+        "measures": [
+          { "value": 7100, "type": 1, "unit": -2 },
+          { "value": 1900, "type": 6, "unit": -2 },
+          { "value": 6200, "type": 76, "unit": -2 }
+        ]
+      },
+      {
+        "grpid": 1003,
+        "attrib": 0,
+        "date": 1705399200,
+        "created": 1705399200,
+        "category": 1,
+        "deviceid": "test-scale",
+        "measures": [
+          { "value": 7050, "type": 1, "unit": -2 },
+          { "value": 720, "type": 11, "unit": 0 }
+        ]
+      }
+    ],
+    "more": 0,
+    "offset": 0
+  }
+}

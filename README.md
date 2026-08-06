@@ -2,7 +2,7 @@
 
 Desktop Obsidian plugin that connects to your Withings account and syncs scale measurements into **core Daily Notes** frontmatter.
 
-**Status:** Step 3 — plugin Connect/Disconnect implemented; measurement sync is Step 5.
+**Status:** Step 4 — pure measurement helpers and fixture tests; sync to Daily Notes is Step 5.
 
 ## Repository layout
 
@@ -17,7 +17,7 @@ worker/   Cloudflare Worker OAuth bridge (wrangler)
 cd plugin
 npm install
 npm run build      # production build → main.js
-npm test           # placeholder tests (real tests in Step 4)
+npm test           # fixture-based helper tests
 ```
 
 ### Sideload for development
