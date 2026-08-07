@@ -1,107 +1,133 @@
 # Withings Sync
 
-Desktop Obsidian plugin that connects to your Withings account and syncs scale measurements into **core Daily Notes** frontmatter.
+Sync your Withings scale measurements into Obsidian **Daily Notes** —
+automatically, in the background, with your preferred units and formatting.
 
-**Status:** Step 6 — backfill modal and chunked range sync; docs/release is Step 7.
+## Features
 
-## Repository layout
+- **Daily Notes integration** — weight and body composition land in the right
+  daily note’s frontmatter
+- **Latest reading per day** — if you weigh in multiple times, only the most
+  recent value for that day is kept
+- **Pick what to track** — enable the measurements you care about and rename
+  the frontmatter fields to match your vault
+- **Set it and forget it** — optional sync on startup and on a schedule; manual
+  **Sync now** when you want a refresh
+- **Fill in the past** — **Backfill** any date range (up to one year) for
+  history before you started using the plugin
+- **Your units, your locale** — kg or lb, and decimal formatting that fits your
+  notes (e.g. `87,15` or `87.15`)
+
+**Desktop only.** Requires Obsidian’s core **Daily Notes** plugin.
+
+## Install
+
+Requirements:
+
+- Obsidian desktop (Windows, macOS, or Linux)
+- Core **Daily Notes** enabled in your vault
+- A Withings account with scale data
+- Internet access to Withings and the author OAuth Worker
+
+### From Community Plugins
+
+1. Settings → **Community plugins** → turn off Restricted mode if needed.
+2. Browse → search **Withings Sync** → Install → Enable.
+
+### From GitHub Release
+
+1. Open [Releases](https://github.com/iyiguncevik/obsidian-withings-sync/releases) and download `main.js`, `manifest.json`, and `styles.css` from the latest release.
+2. In your vault, create `.obsidian/plugins/withings-sync/` if it does not exist.
+3. Copy the three files into that folder.
+4. Settings → **Community plugins** → turn off Restricted mode if needed → enable **Withings Sync**.
+
+### From source (Makefile)
+
+```bash
+git clone https://github.com/iyiguncevik/obsidian-withings-sync.git
+cd obsidian-withings-sync
+make build
+OBSIDIAN_VAULT=/path/to/vault make install-vault
+```
+
+For a throwaway test vault with Daily Notes pre-enabled:
+
+```bash
+make test-vault
+```
+
+Then in Obsidian: **File → Open folder as vault** → `.test-vault/` in this repo.
+
+## Quick start
+
+1. Open **Settings → Withings Sync**.
+2. Click **Connect** and complete Withings login in the browser.
+3. Approve opening Obsidian when the browser redirects (`obsidian://withings-sync/auth?...`).
+4. Enable the measurements you want and adjust property names if needed.
+5. Use **Sync now** in settings or the command palette, or wait for startup/interval sync.
+
+## Settings overview
+
+| Area             | What it does                                                                    |
+| ---------------- | ------------------------------------------------------------------------------- |
+| **Connection**   | Connect / Disconnect; shows last synced time                                    |
+| **Options**      | Unit, number locale, startup sync, interval, Sync now + Backfill, lookback days |
+| **Measurements** | Enable/disable each type; rename frontmatter property                           |
+
+### Sync behavior
+
+| Trigger                                    | Fetch strategy                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| **Startup / interval** (after first sync)  | Incremental — measurements since last sync                              |
+| **Startup / interval** (before first sync) | Lookback window (default **7 days**); notifies if empty                 |
+| **Sync now** (manual)                      | Full lookback window; overwrites frontmatter for those days             |
+| **Backfill**                               | User-chosen date range (max **365** days, fetched in **90**-day chunks) |
+
+Backfill updates **last synced** but does **not** advance the incremental sync cursor.
+
+Automatic sync with no new data is silent. Empty first-time lookback and empty
+backfill show a Notice.
+
+Minimum sync interval: **10 minutes**, or **0** to disable interval sync.
+
+## Commands
+
+- Connect Withings account
+- Disconnect
+- Sync now
+- Backfill date range…
+
+## Troubleshooting
+
+| Problem                             | What to try                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| Connect does not return to Obsidian | Confirm Obsidian is the handler for `obsidian://` links on your OS        |
+| Sync fails immediately              | Enable core Daily Notes; connect account; enable at least one measurement |
+| No data on first sync               | Weigh-in may be outside lookback — use **Backfill** for older dates       |
+| Values use wrong decimal separator  | Set **Number locale** in settings, then run **Sync now**                  |
+| DevTools detail                     | **Ctrl+Shift+I** → Console → filter `Withings Sync`                       |
+
+## Privacy and data flow
 
 ```text
-plugin/   Obsidian plugin (esbuild)
-worker/   Cloudflare Worker OAuth bridge (wrangler)
+You → Obsidian plugin (vault-local token storage)
+Plugin → Withings API (getmeas with your access token)
+Plugin → Author Worker (OAuth code exchange + token refresh only)
+Worker → Withings token endpoint (holds Client Secret)
 ```
 
-## Plugin
+**Stored in your vault** (plugin data): OAuth access/refresh tokens, sync
+settings, last sync timestamps.
 
-```bash
-cd plugin
-npm install
-npm run build      # production build → main.js
-npm test           # fixture-based helper tests
-```
+**Not stored on the Worker**: your tokens are exchanged in transit only; the
+Worker does not proxy measurements or keep a user database.
 
-### Sideload for development
+**Not sent to third parties** beyond Withings and the author Worker required
+for OAuth and API calls.
 
-```bash
-make build
-make test-vault    # or OBSIDIAN_VAULT=/path/to/vault make install-vault
-```
+**Brief exposure**: tokens appear in the `obsidian://withings-sync/auth?...`
+URL during Connect (browser → Obsidian handoff). Do not share that URL or
+screen recordings of it.
 
-In Obsidian: enable **Community plugins**, turn off Restricted mode, enable **Withings Sync**, then run **Connect Withings account** from the command palette or plugin settings.
-
-**Requirements:** Core **Daily Notes** must be enabled. Use **Sync now** after connecting; configure measurements, units, lookback, and sync interval in plugin settings.
-
-**Sync behavior:** On startup and on interval, the plugin fetches measurements **since the last sync** (incremental). Before the first sync it checks the lookback window (default 7 days) and notifies if nothing is found. **Sync now** always re-fetches the lookback window and overwrites frontmatter for those days.
-
-**Backfill:** Run **Backfill date range…** from the command palette or the **Backfill…** button in settings. Enter `YYYY-MM-DD` from/to dates (max 365 days inclusive). The plugin fetches data in 90-day chunks and writes Daily Notes frontmatter using the same rules as regular sync. Backfill updates **last synced** but does **not** advance the incremental `lastupdate` cursor used by Sync now.
-
-CI runs `npm test` and `npm run build` in `plugin/` on every push/PR to `master`.
-
-## Worker
-
-OAuth bridge routes:
-
-| Route | Method | Purpose |
-| ----- | ------ | ------- |
-| `/health` | GET | Uptime check (`ok`) |
-| `/callback` | GET | Withings OAuth redirect; exchanges code; redirects to `obsidian://withings-sync/auth?...` |
-| `/callback` | HEAD | Withings redirect URI verification probe (returns 200) |
-| `/refresh` | POST | JSON `{ "refresh_token": "..." }` → `{ access_token, refresh_token, expires_in }` |
-| `/client-id` | GET | Public Withings Client ID (used by plugin if not hardcoded) |
-
-### Required configuration
-
-Set these in Cloudflare (never commit values):
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `WITHINGS_CLIENT_ID` | secret | Withings Public API Client ID |
-| `WITHINGS_CLIENT_SECRET` | secret | Withings Public API Client Secret |
-| `WITHINGS_REDIRECT_URI` | secret or var | Must match the Withings developer app exactly, e.g. `https://withings-sync-auth.<account>.workers.dev/callback` |
-
-### Local development
-
-```bash
-cd worker
-cp .dev.vars.example .dev.vars   # fill in your credentials
-npm install
-npm run dev                      # http://localhost:8787
-```
-
-For local OAuth testing, register `http://localhost:8787/callback` as an additional redirect URI in the Withings developer dashboard (or use the deployed Worker URL for callback testing).
-
-### Deploy
-
-```bash
-cd worker
-wrangler login
-wrangler secret put WITHINGS_CLIENT_ID
-wrangler secret put WITHINGS_CLIENT_SECRET
-wrangler secret put WITHINGS_REDIRECT_URI
-npm run deploy
-```
-
-After deploy:
-
-1. Note the Worker base URL (e.g. `https://withings-sync-auth.<account>.workers.dev`).
-2. In the Withings developer dashboard, set the application **redirect URI** to `{WORKER_BASE_URL}/callback`.
-3. Save the Worker base URL and public Client ID for Step 3 (plugin hardcoded constants).
-
-Structured logs use JSON (`event`, `withingsStatus`, etc.) and never include tokens or authorization codes. Wire Cloudflare Workers Observability → Grafana Cloud OTLP for logs/traces.
-
-## Makefile
-
-From the repo root:
-
-```bash
-make build         # build the plugin
-make test          # run plugin tests
-make test-vault    # create ./.test-vault/ (Daily Notes + Withings Sync pre-enabled)
-OBSIDIAN_VAULT=/path/to/vault make install-vault   # copy build into a vault
-```
-
-Open the test vault in Obsidian: **File → Open folder as vault** → select `.test-vault/` in this repo.
-
-## Author
-
-iyiguncevik
+Worker logs are structured JSON without tokens or authorization codes. See
+[docs/WORKER.md](docs/WORKER.md) for maintainer observability notes.
