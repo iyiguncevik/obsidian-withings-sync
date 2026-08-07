@@ -107,14 +107,49 @@ Minimum sync interval: **10 minutes**, or **0** to disable interval sync.
 | Values use wrong decimal separator  | Set **Number locale** in settings, then run **Sync now**                  |
 | DevTools detail                     | **Ctrl+Shift+I** → Console → filter `Withings Sync`                       |
 
-## Privacy and data flow
+## Disclosures
 
-```text
-You → Obsidian plugin (vault-local token storage)
-Plugin → Withings API (getmeas with your access token)
-Plugin → Author Worker (OAuth code exchange + token refresh only)
-Worker → Withings token endpoint (holds Client Secret)
-```
+### Network access to Withings
+
+This plugin calls the **Withings cloud API** (`wbsapi.withings.net`) to read
+your scale measurements after you connect your account. That is the core
+function of the plugin: without Withings, there is nothing to sync into your
+Daily Notes. Requests use your OAuth access token and only fetch data for your
+own Withings account. Measurements are written to notes in your vault; they are
+not sent to any other service.
+
+### Network access to author Cloudflare Worker
+
+Withings OAuth requires a **Client Secret** during login. That secret cannot be
+stored safely inside a desktop plugin, so the plugin uses a small
+**author-hosted Cloudflare Worker** only for authentication:
+
+- **`GET /callback`** — exchanges the Withings authorization code for tokens
+  during **Connect**, then redirects back to Obsidian.
+- **`POST /refresh`** — refreshes your access token when it expires (sends your
+  refresh token; receives new tokens).
+
+The Worker is **not** used for sync. Your weight and body-composition data go
+**directly** from Obsidian to Withings. The Worker never receives, stores, or
+proxies measurement data. It has no database, no user accounts, and no
+long-term token storage — tokens pass through only for the exchange/refresh
+handshake, then live in your vault like any other plugin setting.
+
+The Worker is open source in this repository:
+[worker/src/](https://github.com/iyiguncevik/obsidian-withings-sync/tree/master/worker/src).
+You can verify that it only implements health check, OAuth callback, and token
+refresh — nothing else.
+
+**Why this is not a privacy concern for typical use:** the Worker sees the same
+kind of short-lived OAuth traffic any cloud app uses at login time. It does not
+read your vault, does not see which notes you edit, and does not collect
+analytics. Your health measurements stay between **you → Withings → Obsidian
+(your device)**.
+
+Deployed Worker base URL (hardcoded in the plugin):
+`https://withings-sync-auth.iyigun.workers.dev`
+
+## Privacy and data flow
 
 **Stored in your vault** (plugin data): OAuth access/refresh tokens, sync
 settings, last sync timestamps.
@@ -124,10 +159,6 @@ Worker does not proxy measurements or keep a user database.
 
 **Not sent to third parties** beyond Withings and the author Worker required
 for OAuth and API calls.
-
-**Brief exposure**: tokens appear in the `obsidian://withings-sync/auth?...`
-URL during Connect (browser → Obsidian handoff). Do not share that URL or
-screen recordings of it.
 
 Worker logs are structured JSON without tokens or authorization codes. See
 [docs/WORKER.md](docs/WORKER.md) for maintainer observability notes.

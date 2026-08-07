@@ -112,8 +112,6 @@ class WithingsSyncSettingTab extends PluginSettingTab {
     this.syncNowButton = null;
     this.backfillButton = null;
 
-    containerEl.createEl("h2", { text: "Withings Sync" });
-
     const auth = await loadAuthData(this.plugin);
     const settings = await loadSettings(this.plugin);
     const connected = isConnected(auth);

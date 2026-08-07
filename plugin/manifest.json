@@ -2,7 +2,7 @@
   "id": "withings-sync",
   "name": "Withings Sync",
   "version": "0.1.0",
-  "minAppVersion": "1.5.0",
+  "minAppVersion": "1.13.4",
   "description": "Sync Withings scale measurements into core Daily Notes frontmatter (desktop only).",
   "author": "Iyigun Cevik",
   "isDesktopOnly": true
