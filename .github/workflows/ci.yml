@@ -21,4 +21,9 @@ jobs:
           cache-dependency-path: plugin/package-lock.json
       - run: npm ci
       - run: npm test
-      - run: npm run build
+      - name: Verify root manifest is present
+        working-directory: .
+        run: test -f manifest.json
+      - name: Build plugin
+        working-directory: .
+        run: make build

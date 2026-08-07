@@ -1,6 +1,7 @@
 .PHONY: build test install-vault test-vault
 
 build:
+	cp manifest.json plugin/manifest.json
 	cd plugin && npm run build
 
 test:
